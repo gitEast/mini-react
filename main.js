@@ -53,5 +53,16 @@ function render(vnode, container) {
 }
 
 const appVNode = createElement('div', { id: 'app' }, 'app');
-const container = document.querySelector('#root');
-render(appVNode, container);
+
+const ReactDOM = {
+  createRoot(container) {
+    return {
+      render(vnode) {
+        render(vnode, container);
+      }
+    };
+  }
+};
+
+// 根据 React 项目格式书写
+ReactDOM.createRoot(document.querySelector('#root')).render(appVNode);
