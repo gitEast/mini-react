@@ -10,7 +10,9 @@ function createElement(type, props, ...children) {
     type,
     props: {
       ...props,
-      children
+      children: children.map((child) =>
+        typeof child === 'string' ? createTextNode(child) : child
+      )
     }
   };
 }
@@ -29,15 +31,27 @@ function createTextNode(text) {
   };
 }
 
-function render(vnode) {}
+function render(vnode, container) {
+  // 1. 创建 dom
+  const el =
+    vnode.type === 'TEXT_ELEMENT'
+      ? document.createTextNode('')
+      : document.createElement(vnode.type);
 
-const textVNode = createTextNode('app');
-const appVNode = createElement('div', { id: 'app' }, textVNode);
-const appEl = document.createElement(appVNode.type);
-appEl.id = appVNode.props.id;
+  // 2. 处理 props
+  for (const prop in vnode.props) {
+    if (prop !== 'children') {
+      el[prop] = vnode.props[prop];
+    }
+  }
+
+  // 3.处理 props.children
+  vnode.props.children.forEach((child) => render(child, el));
+
+  // 4. 挂载
+  container.append(el);
+}
+
+const appVNode = createElement('div', { id: 'app' }, 'app');
 const container = document.querySelector('#root');
-container.append(appEl);
-
-const textNode = document.createTextNode('');
-textNode.nodeValue = textVNode.props.nodeValue;
-appEl.append(textNode);
+render(appVNode, container);
