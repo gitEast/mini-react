@@ -1,22 +1,41 @@
 /**
- * 将节点抽象成虚拟节点
+ * 创建虚拟节点
+ * @param {string} type dom 类型
+ * @param {object} props 属性
+ * @param  {...any} children
+ * @returns 虚拟节点
  */
-const appVNode = {
-  type: 'div',
-  props: {
-    id: 'app',
-    children: ['app']
-  }
-};
-const appEl = document.createElement('div');
+function createElement(type, props, ...children) {
+  return {
+    type,
+    props: {
+      ...props,
+      children
+    }
+  };
+}
+
+/**
+ * 返回虚拟的文本节点
+ * @param {string} text 节点内容
+ */
+function createTextNode(text) {
+  return {
+    type: 'TEXT_ELEMENT',
+    props: {
+      nodeValue: text,
+      children: []
+    }
+  };
+}
+
+const textVNode = createTextNode('app');
+const appVNode = createElement('div', { id: 'app' }, textVNode);
+const appEl = document.createElement(appVNode.type);
 appEl.id = 'app';
 const container = document.querySelector('#root');
 container.append(appEl);
 
-const textVNode = {
-  type: 'TEXT_ELEMENT', // 意为文本节点
-  props: { nodeValue: 'app' }
-};
 const textNode = document.createTextNode('');
 textNode.nodeValue = 'app';
 appEl.append(textNode);
