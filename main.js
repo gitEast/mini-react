@@ -29,13 +29,15 @@ function createTextNode(text) {
   };
 }
 
+function render(vnode) {}
+
 const textVNode = createTextNode('app');
 const appVNode = createElement('div', { id: 'app' }, textVNode);
 const appEl = document.createElement(appVNode.type);
-appEl.id = 'app';
+appEl.id = appVNode.props.id;
 const container = document.querySelector('#root');
 container.append(appEl);
 
 const textNode = document.createTextNode('');
-textNode.nodeValue = 'app';
+textNode.nodeValue = textVNode.props.nodeValue;
 appEl.append(textNode);
