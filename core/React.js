@@ -88,7 +88,12 @@ function performWorkOfUnit(fiber) {
   // 5. 返回下一个任务
   if (fiber.child) return fiber.child;
   else if (fiber.sibling) return fiber.sibling;
-  return fiber.parent.sibling;
+  let parent = fiber.parent;
+  while (parent) {
+    if (parent.sibling) return parent.sibling;
+    parent = parent.parent;
+  }
+  return null;
 
   function createDom(type) {
     return type === 'TEXT_ELEMENT'
