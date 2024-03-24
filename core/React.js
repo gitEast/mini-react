@@ -80,7 +80,13 @@ function commitRoot(root) {
 
 function commitWork(fiber) {
   if (!fiber) return;
-  fiber.parent.dom.append(fiber.dom);
+
+  let fiberParent = fiber.parent;
+  while (!fiberParent.dom) {
+    fiberParent = fiberParent.parent;
+  }
+  fiber.dom && fiberParent.dom.append(fiber.dom);
+
   commitWork(fiber.child);
   commitWork(fiber.sibling);
 }
@@ -91,17 +97,23 @@ function commitWork(fiber) {
  * @returns 下一次要执行的任务
  */
 function performWorkOfUnit(fiber) {
+  const isFunctionComponent = typeof fiber.type === 'function';
   // 目前是为了入口 render 的 container 节点做适配
-  if (!fiber.dom) {
-    // 1. 创建 dom
-    const dom = (fiber.dom = createDom(fiber.type));
-    // 2. 处理 props
-    updateProps(dom, fiber.props);
-    // 3. 挂载
-    // fiber.parent.dom.append(dom);
+  if (!isFunctionComponent) {
+    if (!fiber.dom) {
+      // 1. 创建 dom
+      const dom = (fiber.dom = createDom(fiber.type));
+      // 2. 处理 props
+      updateProps(dom, fiber.props);
+      // 3. 挂载
+      // fiber.parent.dom.append(dom);
+    }
   }
 
   // 4.处理 props.children
+  if (isFunctionComponent) {
+    fiber.props.children = [fiber.type()];
+  }
   initChildren(fiber);
 
   // 5. 返回下一个任务

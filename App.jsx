@@ -2,12 +2,16 @@
 /**@jsx ZReact.createElement */
 import ZReact from './core/React';
 
+function Singer() {
+  return <span>容祖儿</span>;
+}
+
 const App = (
   <div id="app">
     <h1>app</h1>
     <h3>
       <p>
-        <span>容祖儿</span>
+        <Singer />
       </p>
     </h3>
     <h3>歌单</h3>
