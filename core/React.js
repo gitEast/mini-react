@@ -71,24 +71,24 @@ requestIdleCallback(workLoop);
  * @param {object} work 当前要执行的任务
  * @returns 下一次要执行的任务
  */
-function performWorkOfUnit(work) {
+function performWorkOfUnit(fiber) {
   // 目前是为了入口 render 的 container 节点做适配
-  if (!work.dom) {
+  if (!fiber.dom) {
     // 1. 创建 dom
-    const dom = (work.dom = createDom(work.type));
+    const dom = (fiber.dom = createDom(fiber.type));
     // 2. 处理 props
-    updateProps(dom, work.props);
+    updateProps(dom, fiber.props);
     // 3. 挂载
-    work.parent.dom.append(dom);
+    fiber.parent.dom.append(dom);
   }
 
   // 4.处理 props.children
-  initChildren(work);
+  initChildren(fiber);
 
   // 5. 返回下一个任务
-  if (work.child) return work.child;
-  else if (work.sibling) return work.sibling;
-  return work.parent.sibling;
+  if (fiber.child) return fiber.child;
+  else if (fiber.sibling) return fiber.sibling;
+  return fiber.parent.sibling;
 
   function createDom(type) {
     return type === 'TEXT_ELEMENT'
@@ -104,12 +104,12 @@ function performWorkOfUnit(work) {
     }
   }
 
-  function initChildren(work) {
+  function initChildren(fiber) {
     let prevChild = null;
-    work.props.children.forEach((child, index) => {
-      if (index === 0) work.child = child;
+    fiber.props.children.forEach((child, index) => {
+      if (index === 0) fiber.child = child;
       else prevChild.sibling = child;
-      child.parent = work;
+      child.parent = fiber;
       prevChild = child;
     });
   }
