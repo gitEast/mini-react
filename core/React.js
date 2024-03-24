@@ -91,6 +91,52 @@ function commitWork(fiber) {
   commitWork(fiber.sibling);
 }
 
+function updateHostComponent(fiber) {
+  if (!fiber.dom) {
+    // 1. 创建 dom
+    const dom = (fiber.dom = createDom(fiber.type));
+    // 2. 处理 props
+    updateProps(dom, fiber.props);
+    // 3. 挂载
+    // fiber.parent.dom.append(dom);
+  }
+}
+
+function updateFunctionComponent(fiber) {
+  fiber.props.children = [fiber.type(fiber.props)];
+}
+
+function createDom(type) {
+  return type === 'TEXT_ELEMENT'
+    ? document.createTextNode('')
+    : document.createElement(type);
+}
+
+function updateProps(dom, props) {
+  for (const prop in props) {
+    if (prop !== 'children') {
+      dom[prop] = props[prop];
+    }
+  }
+}
+
+function initChildren(fiber) {
+  let prevChild = null;
+  fiber.props.children.forEach((child, index) => {
+    const newChild = {
+      ...child,
+      dom: null,
+      child: null,
+      sibling: null,
+      parent: null
+    };
+    if (index === 0) fiber.child = newChild;
+    else prevChild.sibling = newChild;
+    newChild.parent = fiber;
+    prevChild = newChild;
+  });
+}
+
 /**
  * 执行当前任务
  * @param {object} work 当前要执行的任务
@@ -98,22 +144,9 @@ function commitWork(fiber) {
  */
 function performWorkOfUnit(fiber) {
   const isFunctionComponent = typeof fiber.type === 'function';
-  // 目前是为了入口 render 的 container 节点做适配
-  if (!isFunctionComponent) {
-    if (!fiber.dom) {
-      // 1. 创建 dom
-      const dom = (fiber.dom = createDom(fiber.type));
-      // 2. 处理 props
-      updateProps(dom, fiber.props);
-      // 3. 挂载
-      // fiber.parent.dom.append(dom);
-    }
-  }
+  if (isFunctionComponent) updateFunctionComponent(fiber);
+  else updateHostComponent(fiber);
 
-  // 4.处理 props.children
-  if (isFunctionComponent) {
-    fiber.props.children = [fiber.type(fiber.props)];
-  }
   initChildren(fiber);
 
   // 5. 返回下一个任务
@@ -125,37 +158,6 @@ function performWorkOfUnit(fiber) {
     parent = parent.parent;
   }
   return null;
-
-  function createDom(type) {
-    return type === 'TEXT_ELEMENT'
-      ? document.createTextNode('')
-      : document.createElement(type);
-  }
-
-  function updateProps(dom, props) {
-    for (const prop in props) {
-      if (prop !== 'children') {
-        dom[prop] = props[prop];
-      }
-    }
-  }
-
-  function initChildren(fiber) {
-    let prevChild = null;
-    fiber.props.children.forEach((child, index) => {
-      const newChild = {
-        ...child,
-        dom: null,
-        child: null,
-        sibling: null,
-        parent: null
-      };
-      if (index === 0) fiber.child = newChild;
-      else prevChild.sibling = newChild;
-      newChild.parent = fiber;
-      prevChild = newChild;
-    });
-  }
 }
 
 requestIdleCallback(workLoop);
