@@ -43,13 +43,18 @@ function render(vnode, container) {
       children: [vnode]
     }
   };
+
+  root = nextWorkOfUnit;
 }
 
 /**
  * 下一次要执行的任务
  */
 let nextWorkOfUnit = null;
-
+/**
+ * 本次统一提交的根节点
+ */
+let root = null;
 /**
  * 循环执行任务
  * @param {IdleDeadline} deadline
@@ -61,10 +66,24 @@ function workLoop(deadline) {
     shouldYield = deadline.timeRemaining() < 1;
   }
 
+  if (!nextWorkOfUnit && root) {
+    commitRoot(root);
+  }
+
   requestIdleCallback(workLoop);
 }
 
-requestIdleCallback(workLoop);
+function commitRoot(root) {
+  commitWork(root.child);
+  root = null;
+}
+
+function commitWork(fiber) {
+  if (!fiber) return;
+  fiber.parent.dom.append(fiber.dom);
+  commitWork(fiber.child);
+  commitWork(fiber.sibling);
+}
 
 /**
  * 执行当前任务
@@ -79,7 +98,7 @@ function performWorkOfUnit(fiber) {
     // 2. 处理 props
     updateProps(dom, fiber.props);
     // 3. 挂载
-    fiber.parent.dom.append(dom);
+    // fiber.parent.dom.append(dom);
   }
 
   // 4.处理 props.children
@@ -126,6 +145,8 @@ function performWorkOfUnit(fiber) {
     });
   }
 }
+
+requestIdleCallback(workLoop);
 
 const React = {
   render,
