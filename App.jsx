@@ -2,6 +2,10 @@
 /**@jsx ZReact.createElement */
 import ZReact from './core/React';
 
+function SingerWrapper() {
+  return <Singer />;
+}
+
 function Singer() {
   return <span>容祖儿</span>;
 }
@@ -11,7 +15,7 @@ const App = (
     <h1>app</h1>
     <h3>
       <p>
-        <Singer />
+        <SingerWrapper />
       </p>
     </h3>
     <h3>歌单</h3>
