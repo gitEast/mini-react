@@ -107,10 +107,17 @@ function performWorkOfUnit(fiber) {
   function initChildren(fiber) {
     let prevChild = null;
     fiber.props.children.forEach((child, index) => {
-      if (index === 0) fiber.child = child;
-      else prevChild.sibling = child;
-      child.parent = fiber;
-      prevChild = child;
+      const newChild = {
+        ...child,
+        dom: null,
+        child: null,
+        sibling: null,
+        parent: null
+      };
+      if (index === 0) fiber.child = newChild;
+      else prevChild.sibling = newChild;
+      newChild.parent = fiber;
+      prevChild = newChild;
     });
   }
 }
