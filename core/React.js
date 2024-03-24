@@ -72,36 +72,47 @@ requestIdleCallback(workLoop);
  * @returns 下一次要执行的任务
  */
 function performWorkOfUnit(work) {
+  // 目前是为了入口 render 的 container 节点做适配
   if (!work.dom) {
     // 1. 创建 dom
-    const el = (work.dom =
-      work.type === 'TEXT_ELEMENT'
-        ? document.createTextNode('')
-        : document.createElement(work.type));
-
+    const dom = (work.dom = createDom(work.type));
     // 2. 处理 props
-    for (const prop in work.props) {
-      if (prop !== 'children') {
-        el[prop] = work.props[prop];
-      }
-    }
-
+    updateProps(dom, work.props);
     // 3. 挂载
-    work.parent.dom.append(el);
+    work.parent.dom.append(dom);
   }
 
   // 4.处理 props.children
-  let prevChild = null;
-  work.props.children.forEach((child, index) => {
-    if (index === 0) work.child = child;
-    else prevChild.sibling = child;
-    child.parent = work;
-    prevChild = child;
-  });
+  initChildren(work);
 
+  // 5. 返回下一个任务
   if (work.child) return work.child;
   else if (work.sibling) return work.sibling;
   return work.parent.sibling;
+
+  function createDom(type) {
+    return type === 'TEXT_ELEMENT'
+      ? document.createTextNode('')
+      : document.createElement(type);
+  }
+
+  function updateProps(dom, props) {
+    for (const prop in props) {
+      if (prop !== 'children') {
+        dom[prop] = props[prop];
+      }
+    }
+  }
+
+  function initChildren(work) {
+    let prevChild = null;
+    work.props.children.forEach((child, index) => {
+      if (index === 0) work.child = child;
+      else prevChild.sibling = child;
+      child.parent = work;
+      prevChild = child;
+    });
+  }
 }
 
 const React = {
