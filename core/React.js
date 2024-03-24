@@ -112,7 +112,7 @@ function performWorkOfUnit(fiber) {
 
   // 4.处理 props.children
   if (isFunctionComponent) {
-    fiber.props.children = [fiber.type()];
+    fiber.props.children = [fiber.type(fiber.props)];
   }
   initChildren(fiber);
 
