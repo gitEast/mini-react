@@ -67,13 +67,13 @@ function workLoop(deadline) {
   }
 
   if (!nextWorkOfUnit && root) {
-    commitRoot(root);
+    commitRoot();
   }
 
   requestIdleCallback(workLoop);
 }
 
-function commitRoot(root) {
+function commitRoot() {
   commitWork(root.child);
   root = null;
 }
