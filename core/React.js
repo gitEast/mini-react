@@ -50,9 +50,7 @@ function render(vnode, container) {
 function update() {
   nextWorkOfUnit = {
     dom: currentRoot.dom,
-    props: {
-      children: currentRoot.props.children
-    },
+    props: currentRoot.props,
     alternate: currentRoot
   };
   wipRoot = nextWorkOfUnit;
@@ -103,7 +101,7 @@ function commitWork(fiber) {
   }
 
   if (fiber.dom) {
-    if (fiber.tagType === 'REPLACEMENT') {
+    if (fiber.effectTag === 'REPLACEMENT') {
       fiberParent.dom.append(fiber.dom);
     } else updateProps(fiber.dom, fiber.props, fiber.alternate.props);
   }
@@ -114,7 +112,6 @@ function commitWork(fiber) {
 
 function updateHostComponent(fiber) {
   if (fiber.type !== fiber.alternate?.type || !fiber.alternate) {
-    fiber.tagType = 'REPLACEMENT';
     fiber.alternate?.dom?.remove();
     if (!fiber.dom) {
       // 1. 创建 dom
@@ -123,7 +120,6 @@ function updateHostComponent(fiber) {
       updateProps(dom, fiber.props);
     }
   } else {
-    fiber.tagType = 'UPDATE';
     fiber.dom = fiber.alternate.dom;
   }
 }
@@ -165,23 +161,37 @@ function updateProps(dom, nextProps, prevProps = {}) {
   }
 }
 
-function initChildren(fiber) {
+function updateChildren(fiber) {
   let oldFiber = fiber.alternate?.child;
   let prevChild = null;
   fiber.props.children.forEach((child, index) => {
-    const newChild = {
-      ...child,
-      dom: null,
-      child: null,
-      sibling: null,
-      parent: null,
-      alternate: oldFiber
-    };
-    if (index === 0) fiber.child = newChild;
-    else prevChild.sibling = newChild;
+    let newFiber;
+    const isSameType = oldFiber && oldFiber.type === child.type;
+    if (isSameType) {
+      newFiber = {
+        ...child,
+        dom: null,
+        child: null,
+        sibling: null,
+        parent: fiber,
+        alternate: oldFiber,
+        effectTag: 'UPDATE'
+      };
+    } else {
+      newFiber = {
+        ...child,
+        dom: null,
+        child: null,
+        sibling: null,
+        parent: fiber,
+        alternate: oldFiber,
+        effectTag: 'REPLACEMENT'
+      };
+    }
+    if (index === 0) fiber.child = newFiber;
+    else prevChild.sibling = newFiber;
     oldFiber = oldFiber?.sibling;
-    newChild.parent = fiber;
-    prevChild = newChild;
+    prevChild = newFiber;
   });
 }
 
@@ -195,7 +205,7 @@ function performWorkOfUnit(fiber) {
   if (isFunctionComponent) updateFunctionComponent(fiber);
   else updateHostComponent(fiber);
 
-  initChildren(fiber);
+  updateChildren(fiber);
 
   // 5. 返回下一个任务
   if (fiber.child) return fiber.child;
