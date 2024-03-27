@@ -10,6 +10,20 @@ function Singer({ singer }) {
   return <span>{singer}</span>;
 }
 
+let times = 0;
+const ListenTimes = () => {
+  function oneMore() {
+    times++;
+    console.log(times);
+  }
+  return (
+    <div>
+      <span>当前已经听了{times}次</span>
+      <button onClick={oneMore}>再播放一次</button>
+    </div>
+  );
+};
+
 const App = (
   <div id="app">
     <h1>app</h1>
@@ -26,6 +40,7 @@ const App = (
       <li>隆重登场</li>
       <li>未知</li>
     </ul>
+    <ListenTimes />
   </div>
 );
 

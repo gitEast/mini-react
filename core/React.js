@@ -11,7 +11,7 @@ function createElement(type, props, ...children) {
     props: {
       ...props,
       children: children.map((child) =>
-        typeof child === 'string' ? createTextNode(child) : child
+        typeof child !== 'object' ? createTextNode(child) : child
       )
     }
   };
@@ -46,6 +46,8 @@ function render(vnode, container) {
 
   root = nextWorkOfUnit;
 }
+
+function update() {}
 
 /**
  * 下一次要执行的任务
@@ -115,7 +117,12 @@ function createDom(type) {
 function updateProps(dom, props) {
   for (const prop in props) {
     if (prop !== 'children') {
-      dom[prop] = props[prop];
+      if (prop.startsWith('on')) {
+        const eventType = prop.slice(2).toLowerCase();
+        dom.addEventListener(eventType, props[prop]);
+      } else {
+        dom[prop] = props[prop];
+      }
     }
   }
 }
@@ -164,7 +171,8 @@ requestIdleCallback(workLoop);
 
 const React = {
   render,
-  createElement
+  createElement,
+  update
 };
 
 export default React;
