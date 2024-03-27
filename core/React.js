@@ -44,10 +44,19 @@ function render(vnode, container) {
     }
   };
 
-  root = nextWorkOfUnit;
+  wipRoot = nextWorkOfUnit;
 }
 
-function update() {}
+function update() {
+  nextWorkOfUnit = {
+    dom: currentRoot.dom,
+    props: {
+      children: currentRoot.props.children
+    },
+    alternate: currentRoot
+  };
+  wipRoot = nextWorkOfUnit;
+}
 
 /**
  * 下一次要执行的任务
@@ -56,7 +65,11 @@ let nextWorkOfUnit = null;
 /**
  * 本次统一提交的根节点
  */
-let root = null;
+let wipRoot = null;
+/**
+ * update 时要使用的 root
+ */
+let currentRoot = null;
 /**
  * 循环执行任务
  * @param {IdleDeadline} deadline
@@ -68,7 +81,7 @@ function workLoop(deadline) {
     shouldYield = deadline.timeRemaining() < 1;
   }
 
-  if (!nextWorkOfUnit && root) {
+  if (!nextWorkOfUnit && wipRoot) {
     commitRoot();
   }
 
@@ -76,8 +89,9 @@ function workLoop(deadline) {
 }
 
 function commitRoot() {
-  commitWork(root.child);
-  root = null;
+  commitWork(wipRoot.child);
+  currentRoot = wipRoot;
+  wipRoot = null;
 }
 
 function commitWork(fiber) {
@@ -87,20 +101,30 @@ function commitWork(fiber) {
   while (!fiberParent.dom) {
     fiberParent = fiberParent.parent;
   }
-  fiber.dom && fiberParent.dom.append(fiber.dom);
+
+  if (fiber.dom) {
+    if (fiber.tagType === 'REPLACEMENT') {
+      fiberParent.dom.append(fiber.dom);
+    } else updateProps(fiber.dom, fiber.props, fiber.alternate.props);
+  }
 
   commitWork(fiber.child);
   commitWork(fiber.sibling);
 }
 
 function updateHostComponent(fiber) {
-  if (!fiber.dom) {
-    // 1. 创建 dom
-    const dom = (fiber.dom = createDom(fiber.type));
-    // 2. 处理 props
-    updateProps(dom, fiber.props);
-    // 3. 挂载
-    // fiber.parent.dom.append(dom);
+  if (fiber.type !== fiber.alternate?.type || !fiber.alternate) {
+    fiber.tagType = 'REPLACEMENT';
+    fiber.alternate?.dom?.remove();
+    if (!fiber.dom) {
+      // 1. 创建 dom
+      const dom = (fiber.dom = createDom(fiber.type));
+      // 2. 处理 props
+      updateProps(dom, fiber.props);
+    }
+  } else {
+    fiber.tagType = 'UPDATE';
+    fiber.dom = fiber.alternate.dom;
   }
 }
 
@@ -114,20 +138,35 @@ function createDom(type) {
     : document.createElement(type);
 }
 
-function updateProps(dom, props) {
-  for (const prop in props) {
-    if (prop !== 'children') {
+function updateProps(dom, nextProps, prevProps = {}) {
+  for (const prop in prevProps) {
+    if (!(prop in prevProps)) {
       if (prop.startsWith('on')) {
         const eventType = prop.slice(2).toLowerCase();
-        dom.addEventListener(eventType, props[prop]);
+        dom.removeEventListener(eventType, prevProps[prop]);
       } else {
-        dom[prop] = props[prop];
+        dom.removeAttribute(prevProps[prop]);
+      }
+    }
+  }
+
+  for (const prop in nextProps) {
+    if (prop !== 'children') {
+      if (nextProps[prop] !== prevProps[prop]) {
+        if (prop.startsWith('on')) {
+          const eventType = prop.slice(2).toLowerCase();
+          dom.removeEventListener(eventType, prevProps[prop]);
+          dom.addEventListener(eventType, nextProps[prop]);
+        } else {
+          dom[prop] = nextProps[prop];
+        }
       }
     }
   }
 }
 
 function initChildren(fiber) {
+  let oldFiber = fiber.alternate?.child;
   let prevChild = null;
   fiber.props.children.forEach((child, index) => {
     const newChild = {
@@ -135,10 +174,12 @@ function initChildren(fiber) {
       dom: null,
       child: null,
       sibling: null,
-      parent: null
+      parent: null,
+      alternate: oldFiber
     };
     if (index === 0) fiber.child = newChild;
     else prevChild.sibling = newChild;
+    oldFiber = oldFiber?.sibling;
     newChild.parent = fiber;
     prevChild = newChild;
   });

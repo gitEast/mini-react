@@ -1,6 +1,5 @@
 // js pragma https://stackoverflow.com/questions/14593350/what-exactly-is-a-javascript-pragma
-/**@jsx ZReact.createElement */
-import ZReact from './core/React';
+import React from './core/React';
 
 function SingerWrapper({ singer }) {
   return <Singer singer={singer} />;
@@ -14,7 +13,7 @@ let times = 0;
 const ListenTimes = () => {
   function oneMore() {
     times++;
-    console.log(times);
+    React.update();
   }
   return (
     <div>
