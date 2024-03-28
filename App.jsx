@@ -5,8 +5,19 @@ function SingerWrapper({ singer }) {
   return <Singer singer={singer} />;
 }
 
+let isSpan = true;
 function Singer({ singer }) {
-  return <span>{singer}</span>;
+  function changeType() {
+    isSpan = !isSpan;
+    React.update();
+  }
+
+  return (
+    <div>
+      {isSpan ? <span>{singer}</span> : <div>{singer}</div>}
+      <button onClick={changeType}>更换 span or div</button>
+    </div>
+  );
 }
 
 let times = 0;
@@ -33,11 +44,21 @@ const App = (
     </h3>
     <h3>歌单</h3>
     <ul>
-      <li>华丽邂逅</li>
-      <li>东京人寿</li>
-      <li>再见我的初恋</li>
-      <li>隆重登场</li>
-      <li>未知</li>
+      <li>
+        <span>华丽邂逅</span>
+      </li>
+      <li>
+        <span>东京人寿</span>
+      </li>
+      <li>
+        <span>再见我的初恋</span>
+      </li>
+      <li>
+        <span>隆重登场</span>
+      </li>
+      <li>
+        <span>未知</span>
+      </li>
     </ul>
     <ListenTimes />
   </div>

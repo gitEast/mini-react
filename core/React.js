@@ -32,6 +32,23 @@ function createTextNode(text) {
 }
 
 /**
+ * 下一次要执行的任务
+ */
+let nextWorkOfUnit = null;
+/**
+ * 本次统一提交的根节点
+ */
+let wipRoot = null;
+/**
+ * update 时要使用的 root
+ */
+let currentRoot = null;
+/**
+ * 记录要删除的 fiber
+ */
+const deletions = [];
+
+/**
  * 将虚拟节点挂载到容器上
  * @param {object} vnode 虚拟节点
  * @param {HTMLElement} container 容器`
@@ -57,18 +74,6 @@ function update() {
 }
 
 /**
- * 下一次要执行的任务
- */
-let nextWorkOfUnit = null;
-/**
- * 本次统一提交的根节点
- */
-let wipRoot = null;
-/**
- * update 时要使用的 root
- */
-let currentRoot = null;
-/**
  * 循环执行任务
  * @param {IdleDeadline} deadline
  */
@@ -87,9 +92,22 @@ function workLoop(deadline) {
 }
 
 function commitRoot() {
+  deletions.forEach((child) => commitDeletion(child));
   commitWork(wipRoot.child);
   currentRoot = wipRoot;
   wipRoot = null;
+  deletions.length = 0;
+}
+
+function commitDeletion(fiber) {
+  let fiberParent = fiber.parent;
+  while (!fiberParent.dom) {
+    fiberParent = fiberParent.parent;
+  }
+
+  if (fiber.dom) {
+    fiberParent.dom.removeChild(fiber.dom);
+  }
 }
 
 function commitWork(fiber) {
@@ -112,7 +130,6 @@ function commitWork(fiber) {
 
 function updateHostComponent(fiber) {
   if (fiber.type !== fiber.alternate?.type || !fiber.alternate) {
-    fiber.alternate?.dom?.remove();
     if (!fiber.dom) {
       // 1. 创建 dom
       const dom = (fiber.dom = createDom(fiber.type));
@@ -184,9 +201,9 @@ function updateChildren(fiber) {
         child: null,
         sibling: null,
         parent: fiber,
-        alternate: oldFiber,
         effectTag: 'REPLACEMENT'
       };
+      oldFiber && deletions.push(oldFiber);
     }
     if (index === 0) fiber.child = newFiber;
     else prevChild.sibling = newFiber;
