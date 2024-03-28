@@ -65,6 +65,20 @@ function SongList() {
   );
 }
 
+let isShowCompany = true;
+function Company() {
+  function change() {
+    isShowCompany = !isShowCompany;
+    React.update();
+  }
+  return (
+    <div>
+      <span>{isShowCompany && '英皇娱乐'}</span>
+      <button onClick={change}>change isShowCompany</button>
+    </div>
+  );
+}
+
 const App = (
   <div id="app">
     <h1>app</h1>
@@ -72,6 +86,7 @@ const App = (
       <p>
         <SingerWrapper singer={'容祖儿'} />
       </p>
+      <Company />
     </h3>
     <SongList />
     <h3>歌单</h3>

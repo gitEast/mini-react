@@ -14,6 +14,7 @@ function createElement(type, props, ...children) {
     props: {
       ...props,
       children: children.reduce((prev, child) => {
+        if (!child) return [...prev];
         if (Array.isArray(child))
           return [...prev, ...child.map((c) => convertElement(c))];
         return [...prev, convertElement(child)];
