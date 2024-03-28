@@ -34,6 +34,37 @@ const ListenTimes = () => {
   );
 };
 
+const songs = ['华丽邂逅', '东京人寿', '再见我的初恋', '隆重登场', '未知'];
+const backSongs = ['卸妆', '心之科学', '悲观生物学', '蛇'];
+let index = 0;
+
+function SongList() {
+  function add() {
+    index = index % 4;
+    songs.push(backSongs[index++]);
+    React.update();
+  }
+
+  function del() {
+    songs.pop();
+    React.update();
+  }
+
+  return (
+    <div>
+      <ul>
+        {songs.map((song) => (
+          <li>
+            <span>{song}</span>
+          </li>
+        ))}
+      </ul>
+      <button onClick={add}>add a song</button>
+      <button onClick={del}>delete a song</button>
+    </div>
+  );
+}
+
 const App = (
   <div id="app">
     <h1>app</h1>
@@ -42,24 +73,9 @@ const App = (
         <SingerWrapper singer={'容祖儿'} />
       </p>
     </h3>
+    <SongList />
     <h3>歌单</h3>
-    <ul>
-      <li>
-        <span>华丽邂逅</span>
-      </li>
-      <li>
-        <span>东京人寿</span>
-      </li>
-      <li>
-        <span>再见我的初恋</span>
-      </li>
-      <li>
-        <span>隆重登场</span>
-      </li>
-      <li>
-        <span>未知</span>
-      </li>
-    </ul>
+
     <ListenTimes />
   </div>
 );

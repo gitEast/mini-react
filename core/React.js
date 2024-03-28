@@ -6,13 +6,18 @@
  * @returns 虚拟节点
  */
 function createElement(type, props, ...children) {
+  function convertElement(child) {
+    return typeof child === 'object' ? child : createTextNode(child);
+  }
   return {
     type,
     props: {
       ...props,
-      children: children.map((child) =>
-        typeof child !== 'object' ? createTextNode(child) : child
-      )
+      children: children.reduce((prev, child) => {
+        if (Array.isArray(child))
+          return [...prev, ...child.map((c) => convertElement(c))];
+        return [...prev, convertElement(child)];
+      }, [])
     }
   };
 }
@@ -139,10 +144,11 @@ function updateHostComponent(fiber) {
   } else {
     fiber.dom = fiber.alternate.dom;
   }
+  updateChildren(fiber, fiber.props.children);
 }
 
 function updateFunctionComponent(fiber) {
-  fiber.props.children = [fiber.type(fiber.props)];
+  updateChildren(fiber, [fiber.type(fiber.props)]);
 }
 
 function createDom(type) {
@@ -178,10 +184,10 @@ function updateProps(dom, nextProps, prevProps = {}) {
   }
 }
 
-function updateChildren(fiber) {
+function updateChildren(fiber, children) {
   let oldFiber = fiber.alternate?.child;
   let prevChild = null;
-  fiber.props.children.forEach((child, index) => {
+  children.forEach((child, index) => {
     let newFiber;
     const isSameType = oldFiber && oldFiber.type === child.type;
     if (isSameType) {
@@ -210,6 +216,11 @@ function updateChildren(fiber) {
     oldFiber = oldFiber?.sibling;
     prevChild = newFiber;
   });
+
+  while (oldFiber) {
+    deletions.push(oldFiber);
+    oldFiber = oldFiber.sibling;
+  }
 }
 
 /**
@@ -221,8 +232,6 @@ function performWorkOfUnit(fiber) {
   const isFunctionComponent = typeof fiber.type === 'function';
   if (isFunctionComponent) updateFunctionComponent(fiber);
   else updateHostComponent(fiber);
-
-  updateChildren(fiber);
 
   // 5. 返回下一个任务
   if (fiber.child) return fiber.child;
