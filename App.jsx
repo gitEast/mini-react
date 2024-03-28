@@ -7,9 +7,11 @@ function SingerWrapper({ singer }) {
 
 let isSpan = true;
 function Singer({ singer }) {
+  console.log('singer render');
+  const update = React.update();
   function changeType() {
     isSpan = !isSpan;
-    React.update();
+    update();
   }
 
   return (
@@ -22,9 +24,11 @@ function Singer({ singer }) {
 
 let times = 0;
 const ListenTimes = () => {
+  console.log('ListenTimes render');
+  const update = React.update();
   function oneMore() {
     times++;
-    React.update();
+    update();
   }
   return (
     <div>
@@ -39,15 +43,17 @@ const backSongs = ['卸妆', '心之科学', '悲观生物学', '蛇'];
 let index = 0;
 
 function SongList() {
+  console.log('SongList render');
+  const update = React.update();
   function add() {
     index = index % 4;
     songs.push(backSongs[index++]);
-    React.update();
+    update();
   }
 
   function del() {
     songs.pop();
-    React.update();
+    update();
   }
 
   return (
@@ -67,9 +73,11 @@ function SongList() {
 
 let isShowCompany = true;
 function Company() {
+  console.log('Company render');
+  const update = React.update();
   function change() {
     isShowCompany = !isShowCompany;
-    React.update();
+    update();
   }
   return (
     <div>

@@ -14,7 +14,9 @@ function createElement(type, props, ...children) {
     props: {
       ...props,
       children: children.reduce((prev, child) => {
+        // false 兼容
         if (!child) return [...prev];
+        // Array.map 情况考虑
         if (Array.isArray(child))
           return [...prev, ...child.map((c) => convertElement(c))];
         return [...prev, convertElement(child)];
@@ -53,6 +55,10 @@ let currentRoot = null;
  * 记录要删除的 fiber
  */
 const deletions = [];
+/**
+ * 当前正在被操作的 fiber
+ */
+let wipFiber = null;
 
 /**
  * 将虚拟节点挂载到容器上
@@ -71,12 +77,15 @@ function render(vnode, container) {
 }
 
 function update() {
-  nextWorkOfUnit = {
-    dom: currentRoot.dom,
-    props: currentRoot.props,
-    alternate: currentRoot
+  const currentFiber = wipFiber;
+
+  return () => {
+    nextWorkOfUnit = {
+      ...currentFiber,
+      alternate: currentFiber
+    };
+    wipRoot = nextWorkOfUnit;
   };
-  wipRoot = nextWorkOfUnit;
 }
 
 /**
@@ -87,6 +96,14 @@ function workLoop(deadline) {
   let shouldYield = false;
   while (!shouldYield && nextWorkOfUnit) {
     nextWorkOfUnit = performWorkOfUnit(nextWorkOfUnit);
+
+    if (
+      nextWorkOfUnit &&
+      nextWorkOfUnit.type === getSibing(wipRoot.alternate)?.type
+    ) {
+      nextWorkOfUnit = null;
+    }
+
     shouldYield = deadline.timeRemaining() < 1;
   }
 
@@ -95,6 +112,14 @@ function workLoop(deadline) {
   }
 
   requestIdleCallback(workLoop);
+}
+
+function getSibing(fiber) {
+  let nowFiber = fiber;
+  while (nowFiber && !nowFiber.sibling) {
+    nowFiber = nowFiber.parent;
+  }
+  return nowFiber?.sibling;
 }
 
 function commitRoot() {
@@ -230,6 +255,7 @@ function updateChildren(fiber, children) {
  * @returns 下一次要执行的任务
  */
 function performWorkOfUnit(fiber) {
+  wipFiber = fiber;
   const isFunctionComponent = typeof fiber.type === 'function';
   if (isFunctionComponent) updateFunctionComponent(fiber);
   else updateHostComponent(fiber);
