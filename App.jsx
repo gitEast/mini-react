@@ -29,9 +29,17 @@ const ListenTimes = () => {
 
   React.useEffect(() => {
     console.log('init');
+
+    return () => {
+      console.log('cleanup init');
+    };
   }, []);
   React.useEffect(() => {
     console.log('times update');
+
+    return () => {
+      console.log('cleanup times');
+    };
   }, [times]);
 
   return (

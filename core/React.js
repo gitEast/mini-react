@@ -315,7 +315,8 @@ let effectHooksIndex = 0;
 function useEffect(callback, deps) {
   const effectHook = {
     callback,
-    deps
+    deps,
+    cleanup: undefined
   };
 
   effectHooks.push(effectHook);
@@ -329,23 +330,40 @@ function commitEffectHooks() {
     if (!fiber) return;
 
     if (!fiber.alternate) {
-      fiber.effectHooks?.forEach((effectHook) => effectHook.callback());
+      fiber.effectHooks?.forEach(
+        (effectHook) => (effectHook.cleanup = effectHook.callback())
+      );
     } else {
       const oldEffectHooks = fiber.alternate?.effectHooks;
       fiber.effectHooks?.forEach((newHook, index) => {
         if (newHook.deps.length === 0) return;
 
         const oldHook = oldEffectHooks[index];
-        const needUpdate = oldHook.deps?.some((oldDep, index) => {
+        const needUpdate = oldHook?.deps?.some((oldDep, index) => {
           return oldDep !== newHook.deps[index];
         });
-        needUpdate && newHook?.callback();
+        needUpdate && (newHook.cleanup = newHook.callback());
       });
     }
+
     run(fiber.child);
     run(fiber.sibling);
   }
 
+  function runCleanup(fiber) {
+    if (!fiber) return;
+
+    fiber.alternate?.effectHooks?.forEach((hook) => {
+      if (hook.deps.length > 0) {
+        hook.cleanup && hook.cleanup();
+      }
+    });
+
+    runCleanup(fiber.child);
+    runCleanup(fiber.sibling);
+  }
+
+  runCleanup(wipRoot);
   run(wipRoot);
 }
 
