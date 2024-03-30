@@ -26,6 +26,14 @@ const ListenTimes = () => {
   function oneMore() {
     setTimes(() => times + 1);
   }
+
+  React.useEffect(() => {
+    console.log('init');
+  }, []);
+  React.useEffect(() => {
+    console.log('times update');
+  }, [times]);
+
   return (
     <div>
       <span>当前已经听了{times}次</span>
