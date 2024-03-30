@@ -7,7 +7,6 @@ function SingerWrapper({ singer }) {
 
 let isSpan = true;
 function Singer({ singer }) {
-  console.log('singer render');
   const update = React.update();
   function changeType() {
     isSpan = !isSpan;
@@ -22,13 +21,10 @@ function Singer({ singer }) {
   );
 }
 
-let times = 0;
 const ListenTimes = () => {
-  console.log('ListenTimes render');
-  const update = React.update();
+  const [times, setTimes] = React.useState(0);
   function oneMore() {
-    times++;
-    update();
+    setTimes(() => times + 1);
   }
   return (
     <div>
@@ -40,15 +36,14 @@ const ListenTimes = () => {
 
 const songs = ['华丽邂逅', '东京人寿', '再见我的初恋', '隆重登场', '未知'];
 const backSongs = ['卸妆', '心之科学', '悲观生物学', '蛇'];
-let index = 0;
 
 function SongList() {
-  console.log('SongList render');
-  const update = React.update();
+  const [index, setIndex] = React.useState(0);
   function add() {
-    index = index % 4;
-    songs.push(backSongs[index++]);
-    update();
+    setIndex((index) => {
+      songs.push(backSongs[index % 4]);
+      return index + 1;
+    });
   }
 
   function del() {
@@ -65,6 +60,7 @@ function SongList() {
           </li>
         ))}
       </ul>
+      <div>当前已添加{index}首歌</div>
       <button onClick={add}>add a song</button>
       <button onClick={del}>delete a song</button>
     </div>
@@ -73,7 +69,6 @@ function SongList() {
 
 let isShowCompany = true;
 function Company() {
-  console.log('Company render');
   const update = React.update();
   function change() {
     isShowCompany = !isShowCompany;

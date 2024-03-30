@@ -15,7 +15,7 @@ function createElement(type, props, ...children) {
       ...props,
       children: children.reduce((prev, child) => {
         // false 兼容
-        if (!child) return [...prev];
+        if (!child && child !== 0) return [...prev];
         // Array.map 情况考虑
         if (Array.isArray(child))
           return [...prev, ...child.map((c) => convertElement(c))];
@@ -82,7 +82,8 @@ function update() {
   return () => {
     nextWorkOfUnit = {
       ...currentFiber,
-      alternate: currentFiber
+      alternate: currentFiber,
+      stateHooks: []
     };
     wipRoot = nextWorkOfUnit;
   };
@@ -224,7 +225,8 @@ function updateChildren(fiber, children) {
         sibling: null,
         parent: fiber,
         alternate: oldFiber,
-        effectTag: 'UPDATE'
+        effectTag: 'UPDATE',
+        stateHooks: []
       };
     } else {
       newFiber = {
@@ -233,7 +235,8 @@ function updateChildren(fiber, children) {
         child: null,
         sibling: null,
         parent: fiber,
-        effectTag: 'REPLACEMENT'
+        effectTag: 'REPLACEMENT',
+        stateHooks: []
       };
       oldFiber && deletions.push(oldFiber);
     }
@@ -255,6 +258,7 @@ function updateChildren(fiber, children) {
  * @returns 下一次要执行的任务
  */
 function performWorkOfUnit(fiber) {
+  stateIndex = 0;
   wipFiber = fiber;
   const isFunctionComponent = typeof fiber.type === 'function';
   if (isFunctionComponent) updateFunctionComponent(fiber);
@@ -271,12 +275,34 @@ function performWorkOfUnit(fiber) {
   return null;
 }
 
+let stateIndex = 0;
+function useState(initial) {
+  const updateCb = update();
+  const oldHook = wipFiber.alternate?.stateHooks?.[stateIndex];
+  const stateHook = {
+    state: oldHook ? oldHook.state : initial
+  };
+
+  if (!wipFiber.stateHooks) wipFiber.stateHooks = [];
+
+  wipFiber.stateHooks.push(stateHook);
+  stateIndex++;
+
+  function stateHookCb(cb) {
+    stateHook.state = cb(stateHook.state);
+    updateCb();
+  }
+
+  return [stateHook.state, stateHookCb];
+}
+
 requestIdleCallback(workLoop);
 
 const React = {
   render,
   createElement,
-  update
+  update,
+  useState
 };
 
 export default React;
