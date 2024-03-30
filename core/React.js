@@ -175,6 +175,8 @@ function updateHostComponent(fiber) {
 }
 
 function updateFunctionComponent(fiber) {
+  stateHooks = [];
+  stateHooksIndex = 0;
   updateChildren(fiber, [fiber.type(fiber.props)]);
 }
 
@@ -258,7 +260,6 @@ function updateChildren(fiber, children) {
  * @returns 下一次要执行的任务
  */
 function performWorkOfUnit(fiber) {
-  stateIndex = 0;
   wipFiber = fiber;
   const isFunctionComponent = typeof fiber.type === 'function';
   if (isFunctionComponent) updateFunctionComponent(fiber);
@@ -275,25 +276,32 @@ function performWorkOfUnit(fiber) {
   return null;
 }
 
-let stateIndex = 0;
+let stateHooks = [];
+let stateHooksIndex = 0;
 function useState(initial) {
-  const updateCb = update();
-  const oldHook = wipFiber.alternate?.stateHooks?.[stateIndex];
+  const oldHook = wipFiber.alternate?.stateHooks?.[stateHooksIndex];
   const stateHook = {
-    state: oldHook ? oldHook.state : initial
+    state: oldHook ? oldHook.state : initial,
+    queue: oldHook ? oldHook.queue : []
   };
 
-  if (!wipFiber.stateHooks) wipFiber.stateHooks = [];
+  stateHook.queue.forEach(
+    (action) => (stateHook.state = action(stateHook.state))
+  );
+  stateHook.queue = [];
 
-  wipFiber.stateHooks.push(stateHook);
-  stateIndex++;
+  stateHooks.push(stateHook);
+  stateHooksIndex++;
 
-  function stateHookCb(cb) {
-    stateHook.state = cb(stateHook.state);
+  wipFiber.stateHooks = stateHooks;
+
+  const updateCb = update();
+  function setState(action) {
+    stateHook.queue.push(action);
     updateCb();
   }
 
-  return [stateHook.state, stateHookCb];
+  return [stateHook.state, setState];
 }
 
 requestIdleCallback(workLoop);
