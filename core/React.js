@@ -230,8 +230,7 @@ function updateChildren(fiber, children) {
         sibling: null,
         parent: fiber,
         alternate: oldFiber,
-        effectTag: 'UPDATE',
-        stateHooks: []
+        effectTag: 'UPDATE'
       };
     } else {
       newFiber = {
@@ -240,8 +239,7 @@ function updateChildren(fiber, children) {
         child: null,
         sibling: null,
         parent: fiber,
-        effectTag: 'REPLACEMENT',
-        stateHooks: []
+        effectTag: 'REPLACEMENT'
       };
       oldFiber && deletions.push(oldFiber);
     }

@@ -56,8 +56,8 @@ const backSongs = ['卸妆', '心之科学', '悲观生物学', '蛇'];
 function SongList() {
   const [index, setIndex] = React.useState(0);
   function add() {
+    songs.push(backSongs[index % 4]);
     setIndex((index) => {
-      songs.push(backSongs[index % 4]);
       return index + 1;
     });
   }
