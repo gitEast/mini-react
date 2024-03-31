@@ -100,7 +100,7 @@ function workLoop(deadline) {
 
     if (
       nextWorkOfUnit &&
-      nextWorkOfUnit.type === getSibing(wipRoot.alternate)?.type
+      nextWorkOfUnit.type === getSibing(wipRoot?.alternate)?.type
     ) {
       nextWorkOfUnit = null;
     }
@@ -110,6 +110,8 @@ function workLoop(deadline) {
 
   if (!nextWorkOfUnit && wipRoot) {
     commitRoot();
+
+    if (nextWorkOfUnit) wipRoot = currentRoot;
   }
 
   requestIdleCallback(workLoop);
@@ -138,8 +140,12 @@ function commitDeletion(fiber) {
     fiberParent = fiberParent.parent;
   }
 
-  if (fiber.dom) {
-    fiberParent.dom.removeChild(fiber.dom);
+  let fiberTarget = fiber;
+  while (!fiberTarget.dom && fiberTarget) {
+    fiberTarget = fiber.child;
+  }
+  if (fiberTarget.dom) {
+    fiberParent.dom.removeChild(fiberTarget.dom);
   }
 }
 

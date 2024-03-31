@@ -2,11 +2,28 @@ import React from '../core/React';
 
 import './index.css';
 
+function TodoItem({ todo, handleRemove, handleStatusChange }) {
+  const className = todo.isDone ? 'done' : '';
+
+  return (
+    <li>
+      <span className={className}>{todo.name}</span>
+      <button onClick={() => handleRemove(todo.id)}>remove</button>
+      <button onClick={() => handleStatusChange(todo.id)}>
+        {todo.isDone ? 'cancel' : 'done'}
+      </button>
+    </li>
+  );
+}
+
 function ToDos() {
-  const originList = localStorage.getItem('todos')
-    ? JSON.parse(localStorage.getItem('todos'))
-    : [];
-  const [todoList, setTodoList] = React.useState(originList);
+  const [todoList, setTodoList] = React.useState([]);
+  React.useEffect(() => {
+    const list = localStorage.getItem('todos');
+    if (list) {
+      setTodoList(JSON.parse(list));
+    }
+  }, []);
 
   function handleAdd() {
     const inputEl = document.querySelector('#input');
@@ -32,15 +49,16 @@ function ToDos() {
     useDoneStatus(doneStatus);
   }
 
-  function handleRemove(index) {
-    const newList = [...todoList];
-    newList.splice(index, 1);
+  function handleRemove(id) {
+    const newList = todoList.filter((todo) => todo.id !== id);
     setTodoList(newList);
   }
 
-  function handleStatusChange(index) {
-    const newList = [...todoList];
-    newList[index].isDone = !newList[index].isDone;
+  function handleStatusChange(id) {
+    const newList = todoList.map((todo) => ({
+      ...todo,
+      isDone: todo.id === id ? !todo.isDone : todo.isDone
+    }));
     setTodoList(newList);
   }
 
@@ -94,17 +112,13 @@ function ToDos() {
               if (doneStatus === 'done') return todo.isDone;
               return !todo.isDone;
             })
-            .map((todo, index) => {
-              const className = todo.isDone ? 'done' : '';
-
+            .map((todo) => {
               return (
-                <li>
-                  <span className={className}>{todo.name}</span>
-                  <button onClick={() => handleRemove(index)}>remove</button>
-                  <button onClick={() => handleStatusChange(index)}>
-                    {todo.isDone ? 'cancel' : 'done'}
-                  </button>
-                </li>
+                <TodoItem
+                  todo={todo}
+                  handleRemove={handleRemove}
+                  handleStatusChange={handleStatusChange}
+                />
               );
             })}
         </ul>
