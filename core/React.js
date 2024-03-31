@@ -301,7 +301,7 @@ function useState(initial) {
     const actionFn = typeof action === 'function' ? action : () => action;
     const eagerState = stateHook.state === actionFn(stateHook.state);
     if (eagerState) return;
-    stateHook.queue.push(action);
+    stateHook.queue.push(actionFn);
     updateCb();
   }
 
